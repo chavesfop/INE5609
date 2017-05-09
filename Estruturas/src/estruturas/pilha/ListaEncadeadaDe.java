@@ -22,6 +22,15 @@ public class ListaEncadeadaDe<Tipo> {
         return tamanho - this.posicoesLivre.qtdDadosInseridos();
     }
     
+    private int _inserir(Tipo dado) throws Exception{
+        if (this._length() >= tamanho){
+            throw new Exception("A lista esta cheia");
+        }
+        int posicaoProximo = this.posicoesLivre.desempilhar();
+        this.dados[posicaoProximo] = dado;
+        return posicaoProximo;
+    }
+    
     public ListaEncadeadaDe(int tamanho){
         this.tamanho = tamanho;
         this.dados = (Tipo[]) new Object[tamanho];
@@ -37,36 +46,60 @@ public class ListaEncadeadaDe<Tipo> {
         }
     }
     
-    public void adicionarNoFim(Tipo dado) throws Exception{
-        if (this._length() >= tamanho){
-            throw new Exception("A lista esta cheia");
-        }
+    public void inserirNoFim(Tipo dado) throws Exception{
         boolean inicial = this._length() == 0;
-        int posicaoProximo = this.posicoesLivre.desempilhar();
-        
         if (inicial){
-            this.posicaoInicial = posicaoProximo;
+            this.inserirNoInicio(dado);
+            return;
         }
-        this.dados[posicaoProximo] = dado;
+        
+        int posicaoProximo = this._inserir(dado);
         this.indice[posicaoProximo] = -1;
-        this.indice[this.posicaoUltimo] = posicaoProximo;
+        if (this.posicaoUltimo != -1){
+            this.indice[this.posicaoUltimo] = posicaoProximo;
+        }
         this.posicaoUltimo = posicaoProximo;
     }
     
     // *[ADD]  -> [FIRST] -> [FIRST_NEXT]
-    public void adicionarNoInicio(Tipo dado) throws Exception{
-        if (this._length() >= tamanho){
-            throw new Exception("A lista esta cheia");
-        }
-        int posicaoProximo = this.posicoesLivre.desempilhar();
+    public void inserirNoInicio(Tipo dado) throws Exception{
+        int posicaoProximo = this._inserir(dado);
         int inicialAtual = this.posicaoInicial;
         
         this.posicaoInicial = posicaoProximo;
-        this.dados[posicaoProximo] = dado;
         this.indice[posicaoProximo] = inicialAtual;
         if (inicialAtual == -1){
             this.posicaoUltimo = posicaoProximo;
         }
+    }
+    
+    // [...] -> [referencia] -> [add] -> [referencia_proximo]
+    public void inserirDepoisDe(Tipo referencia, Tipo inserido) throws Exception{
+        int posicaoReferencia = this.buscar(referencia);
+        if (posicaoReferencia == -1){
+            throw new Exception("Elemento não encontrado");
+        }
+        int posicaoInserida = this._inserir(inserido);
+        int inseridoDeveApontar = this.indice[posicaoReferencia];
+        this.indice[posicaoReferencia] = posicaoInserida;
+        this.indice[posicaoInserida] = inseridoDeveApontar;
+        if (inseridoDeveApontar == -1){
+            this.posicaoUltimo = posicaoInserida;
+        }
+    }
+    
+    public void inserirAntesDe(Tipo referencia, Tipo inserido) throws Exception{
+        int posicaoReferencia = this.buscar(referencia);
+        if (posicaoReferencia == -1){
+            throw new Exception("Elemento não encontrado");
+        }
+        
+        if (this.busca_indiceAnterior == -1){
+            this.inserirNoInicio(inserido);
+            return;
+        }
+        
+        this.inserirDepoisDe(this.dados[this.busca_indiceAnterior], inserido);
     }
     
     public void percorrer(){
@@ -77,20 +110,25 @@ public class ListaEncadeadaDe<Tipo> {
         }
     }
     
+    
+    /*
+    Inicio da area de busca
+    */
+    private int busca_indiceAnterior;
     public int buscar(Tipo dado){
+        this.busca_indiceAnterior = -1;
         int i = this.posicaoInicial;
         while (i != -1){
             if (this.dados[i] == dado){
                 return i;
             }
-            System.out.println("["+i+"] "+this.dados[i]);
+            this.busca_indiceAnterior = i;
             i = this.indice[i];
         }
-        return 0;
+        return -1;
     }
     
-    public Tipo proximo(){
-        return null;
-    }
-    
+    /*
+    Fim da area de busca
+    */
 }
